@@ -1,0 +1,25 @@
+name: RuralHealthEnv
+description: Rural healthcare decision-making environment for India
+action_space:
+  type: discrete
+  actions:
+    - diagnose
+    - treat
+    - refer
+    - wait
+  details:
+    urgency: [low, medium, high]
+observation_space:
+  type: object
+  properties:
+    patient_info: [age, gender]
+    symptoms: [list of strings]
+    vitals: [temperature, bp, heart_rate]
+    available_resources: [list of strings]
+    distance_to_hospital: int
+    history: [list of actions]
+tasks:
+  - easy: Urgency classification (1 step)
+  - medium: Decision-making (Treat vs Refer)
+  - hard: Full rural decision pipeline (Multi-step)
+version: 0.1.0
