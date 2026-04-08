@@ -82,20 +82,21 @@ def start_session_ui():
     task = HardTask(seed=42)
     current_task = task
     obs_ui = task.reset()
-    history = [{"role": "assistant", "content": "New Patient Call Started. Patient: " + obs_ui.latest_utterance}]
+    # Gradio 4 format: list of [user, assistant] tuples
+    history = [[None, "New Patient Call Started. Patient: " + obs_ui.latest_utterance]]
     return history, f"Patient Info: {obs_ui.patient_info.age}yo {obs_ui.patient_info.gender}. Extracted: {obs_ui.symptoms}"
 
 def chat_ui(message, history):
     global obs_ui, current_task
     if obs_ui is None:
-        history.append({"role": "assistant", "content": "Please Reset/Start first."})
+        history.append([message, "Please Reset/Start first."])
         return history, ""
     
     action = Action(action_type=ActionType.ASK_QUESTION, content=message)
     obs_ui, reward, done, info = current_task.step(action)
     
-    history.append({"role": "user", "content": message})
-    history.append({"role": "assistant", "content": obs_ui.latest_utterance})
+    # Update local history with [user, assistant] tuple
+    history.append([message, obs_ui.latest_utterance])
     
     status = f"Step Reward: {reward} | Total Reward: {current_task.env.state().cumulative_reward:.2f} | Status: {'DONE' if done else 'In Progress'}"
     extracted = f"Extracted Symptoms: {obs_ui.symptoms}"
@@ -116,7 +117,8 @@ with gr.Blocks(title="RuralHealthEnv v0.2.0") as demo:
         reset_btn = gr.Button("Start New Case")
         task_info = gr.Textbox(label="Case Metadata", interactive=False)
     
-    chatbot = gr.Chatbot(label="Voice Call Log", type="messages")
+    # Use standard tuple-based chatbot (Gradio 4 style)
+    chatbot = gr.Chatbot(label="Voice Call Log")
     msg = gr.Textbox(label="Your Question to Patient")
     
     with gr.Row():
