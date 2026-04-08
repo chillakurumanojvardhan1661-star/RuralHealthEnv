@@ -1,6 +1,11 @@
 import gradio as gr
 import os
+import sys
 import json
+
+# Ensure parent directory is in path for 'env' imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List

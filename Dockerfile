@@ -18,4 +18,4 @@ ENV HF_TOKEN=""
 EXPOSE 7860
 
 # Command to run (defaults to Gradio app)
-CMD ["python", "app.py"]
+CMD ["python", "server/app.py"]

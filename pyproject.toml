@@ -28,7 +28,8 @@ dependencies = [
 ]
 
 [project.scripts]
-rural-health-env = "app:app"
+rural-health-env = "server.app:app"
+server = "server.app:app"
 
 [project.urls]
 "Homepage" = "https://github.com/chillakurumanojvardhan1661-star/RuralHealthEnv"
