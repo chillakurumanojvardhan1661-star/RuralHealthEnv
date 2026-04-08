@@ -8,25 +8,26 @@ from env.models import Action, ActionType, UrgencyLevel
 env = RuralHealthEnv(seed=42)
 obs = None
 
-def start_session(task_type):
+def start_session():
     global obs
-    # Map task shorthand to template sets or Task objects?
     # For simplicity, we just reset the env.
     obs = env.reset()
-    history = [("System", "New Patient Call Started. Initial Utterance: " + obs.latest_utterance)]
+    history = [{"role": "assistant", "content": "New Patient Call Started. Patient: " + obs.latest_utterance}]
     return history, f"Patient Info: {obs.patient_info.age}yo {obs.patient_info.gender}. Extracted: {obs.symptoms}"
 
 def chat(message, history):
     global obs
     if obs is None:
-        return history + [("System", "Please Reset/Start first.")], ""
+        history.append({"role": "assistant", "content": "Please Reset/Start first."})
+        return history, ""
     
     # Send user question as ASK_QUESTION action
     action = Action(action_type=ActionType.ASK_QUESTION, content=message)
     obs, reward, done, info = env.step(action)
     
     # Update local history
-    history.append((message, obs.latest_utterance))
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": obs.latest_utterance})
     
     status = f"Step Reward: {reward} | Total Reward: {env.state().cumulative_reward:.2f} | Status: {'DONE' if done else 'In Progress'}"
     extracted = f"Extracted Symptoms: {obs.symptoms}"
