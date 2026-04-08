@@ -77,19 +77,24 @@ async def health():
 # --- Gradio UI Logic ---
 obs_ui = None
 
-def start_session_ui():
+def start_session_ui(task_id):
     global obs_ui, current_task
-    task = HardTask(seed=42)
+    task_map = {
+        "easy": EasyTask(),
+        "medium": MediumTask(),
+        "hard": HardTask()
+    }
+    task = task_map.get(task_id, HardTask())
     current_task = task
     obs_ui = task.reset()
     # Gradio 5 format: list of messages (dictionaries)
-    history = [{"role": "assistant", "content": "New Patient Call Started. Patient: " + obs_ui.latest_utterance}]
+    history = [{"role": "assistant", "content": f"New {task_id.capitalize()} Case Started. Patient: " + obs_ui.latest_utterance}]
     return history, f"Patient Info: {obs_ui.patient_info.age}yo {obs_ui.patient_info.gender}. Extracted: {obs_ui.symptoms}"
 
 def chat_ui(message, history):
     global obs_ui, current_task
     if obs_ui is None:
-        history.append({"role": "assistant", "content": "Please Reset/Start first."})
+        history.append({"role": "assistant", "content": "Please select a task and Reset/Start first."})
         return history, ""
     
     action = Action(action_type=ActionType.ASK_QUESTION, content=message)
@@ -112,9 +117,10 @@ def classify_ui(urgency):
 
 with gr.Blocks(title="RuralHealthEnv v0.2.0") as demo:
     gr.Markdown("# 🏥 RuralHealthEnv (v0.2.0) - Conversational AI Assistant")
-    gr.Markdown("This interface handles voice-call assistance simulation for rural India.")
+    gr.Markdown("Select a task level and start a voice-call simulation with a simulated patient.")
     
     with gr.Row():
+        task_selector = gr.Dropdown(["easy", "medium", "hard"], label="Select Task Level", value="hard")
         reset_btn = gr.Button("Start New Case")
         task_info = gr.Textbox(label="Case Metadata", interactive=False)
     
@@ -129,7 +135,7 @@ with gr.Blocks(title="RuralHealthEnv v0.2.0") as demo:
     
     output_log = gr.Textbox(label="Agent Log / Result", interactive=False)
     
-    reset_btn.click(start_session_ui, inputs=[], outputs=[chatbot, task_info])
+    reset_btn.click(start_session_ui, inputs=[task_selector], outputs=[chatbot, task_info])
     msg.submit(chat_ui, inputs=[msg, chatbot], outputs=[chatbot, output_log])
     submit_btn.click(classify_ui, inputs=[urgency_btn], outputs=[output_log])
     
