@@ -1,21 +1,21 @@
-# 🏥 RuralHealthEnv
+# 🏥 RuralHealthEnv (v0.2.0)
 
-### An OpenEnv Benchmark for Rural Healthcare Decision-Making in India
+### A Conversational OpenEnv Benchmark for Rural Healthcare Decision-Making in India
 
 ---
 
 ## 🚀 Overview
 
-**RuralHealthEnv** is a realistic, OpenEnv-compliant reinforcement learning environment that simulates **healthcare decision-making in rural India**.
+**RuralHealthEnv** is a realistic, OpenEnv-compliant reinforcement learning environment that simulates **conversational healthcare decision-making in rural India**. 
+
+In version 0.2.0, the environment has been transformed into a **voice-call assistant simulation**, where an AI agent interacts with patients through natural language to guide medical decisions.
 
 It enables AI agents to learn how to:
 
-* assess patient urgency
+* ask relevant follow-up questions to extract clinical info
+* assess patient urgency from dialogue
 * decide between local treatment and referral
-* operate under severe **resource constraints**
-* avoid unsafe or delayed medical decisions
-
-> 🎯 This environment models real-world challenges faced by rural patients and frontline health workers, where incorrect decisions can lead to serious consequences.
+* operate under severe **resource constraints** in a conversational context
 
 ---
 
@@ -24,38 +24,9 @@ It enables AI agents to learn how to:
 Rural healthcare in India faces critical challenges:
 
 * ❌ No structured triage system
-* 🚑 Emergency conditions often misjudged
+* 🚑 Emergency conditions often misjudged over phone calls
 * 🏥 Limited access to hospitals and specialists
-* 💊 Unsafe or inappropriate local treatments
 * 🌍 Resource constraints (no ICU, limited medicines, staff shortages)
-
-As a result, patients frequently experience:
-
-* delayed care
-* incorrect treatment
-* preventable complications
-
----
-
-## 💡 Our Contribution
-
-RuralHealthEnv addresses these gaps by providing:
-
-### ✅ A Real-World Simulation Environment
-
-Captures **decision-making under constraints**, not ideal conditions.
-
-### ✅ A Benchmark for AI Agents
-
-Allows evaluation of LLMs and RL agents on:
-
-* safety
-* reasoning
-* resource awareness
-
-### ✅ Deterministic, Reproducible Evaluation
-
-All tasks include **ground-truth graders** with normalized scoring.
 
 ---
 
@@ -65,22 +36,27 @@ All tasks include **ground-truth graders** with normalized scoring.
 
 The environment implements:
 
-* `reset()` → initializes a new patient case
-* `step(action)` → returns `(observation, reward, done, info)`
-* `state()` → returns full internal state
+* `reset()` → initializes a new patient case and provides the first utterance.
+* `step(action)` → processes natural language actions and returns `(observation, reward, done, info)`.
+* `state()` → returns full internal state.
 
 ---
 
-### 📥 Observation Space
+### 📥 Observation Space (Conversational)
 
 ```json
 {
   "patient_info": { "age": 45, "gender": "male" },
-  "symptoms": ["chest pain", "sweating"],
+  "symptoms": ["discovered_symptom_1"],
   "vitals": { "temperature": 98.6, "bp": "140/90", "heart_rate": 110 },
   "available_resources": ["PHC", "basic_medicines"],
   "distance_to_hospital": 25,
-  "history": []
+  "latest_utterance": "I have been shivering and having high fever...",
+  "conversation_history": [
+    {"role": "user", "content": "..."},
+    {"role": "assistant", "content": "..."}
+  ],
+  "extracted_data": { "symptoms": [...], "vitals": [...] }
 }
 ```
 
@@ -90,139 +66,83 @@ The environment implements:
 
 ```json
 {
-  "action_type": "diagnose | treat | refer | wait",
-  "details": {}
+  "action_type": "ask_question | classify_urgency | treat | refer | wait",
+  "content": "Natural language response or question",
+  "details": { "urgency": "low|medium|high" }
 }
 ```
 
 ---
 
-### 🎁 Reward Function
+### 🎁 Conversational Reward Function
 
-Multi-component, per-step reward:
+Multi-component, per-turn reward:
 
-| Component            | Weight |
-| -------------------- | ------ |
-| Triage Accuracy      | 0.3    |
-| Decision Correctness | 0.3    |
-| Safety               | 0.2    |
-| Resource Awareness   | 0.2    |
+| Component            | Weight | Description |
+| -------------------- | ------ | ----------- |
+| Question Quality     | 0.2    | Relevance of follow-up questions |
+| Information Gain     | 0.2    | Success in extracting symptoms |
+| Triage Accuracy      | 0.3    | Correctness of urgency classification |
+| Decision Correctness | 0.3    | Correctness of final Treat/Refer action |
+| Safety               | 0.2    | Avoiding catastrophic patient progression |
+| Resource Awareness   | 0.2    | Proper use of available facilities |
 
-Penalties:
-
+**Penalties:**
+* ❌ Redundant question → -0.1
+* ❌ Premature decision → -0.2
 * ❌ Unsafe action → -0.5
-* ❌ Ignoring emergency → -0.7
-
----
-
-## 🧪 Patient Simulation
-
-* 10+ realistic case templates
-* Severity levels: mild, moderate, severe
-* Hidden risk factors (e.g., diabetes, hypertension)
-* Noisy/missing data for realism
-
----
-
-## 🔄 Condition Progression
-
-Patient state evolves over time:
-
-* ✔ Correct action → improvement
-* ❌ Wrong action → worsening
-* ⏳ No action → deterioration
-
-Catastrophic failures (e.g., ignoring emergencies) terminate the episode.
 
 ---
 
 ## 🧩 Tasks
 
 ### 🟢 Easy — Urgency Classification
+* Classify urgency from the initial patient description.
+* **Dialogue**: 0 turns allowed.
 
-* Single-step task
-* Classify: low / medium / high
+### 🟡 Medium — Limited Interaction
+* Ask 1-2 clarifying questions before making a decision.
+* **Target**: Balance accuracy with speed.
 
-### 🟡 Medium — Treat vs Refer
-
-* Decide between:
-
-  * local treatment
-  * referral to higher facility
-* Must consider resources and severity
-
-### 🔴 Hard — Full Decision Pipeline
-
-Agent must:
-
-1. interpret symptoms
-2. classify urgency
-3. choose action
-4. generate safe recommendation
-5. adapt to uncertainty and progression
+### 🔴 Hard — Full Conversation Pipeline
+* Full clinical dialogue (Max 8 turns).
+* Agent must ask high-quality questions to "unlock" hidden risks before deciding.
 
 ---
 
-## ⚖️ Grader System
+## 🧪 Simulation Logic
 
-Each task includes a deterministic grader:
+### 🗣️ Dynamic Patient Response
+Patients generate realistic rural Indian responses to agent questions. They may be vague or omit information unless asked correctly.
 
-* Score range: **0.0 – 1.0**
-* Partial scoring supported
-* Evaluates:
-
-  * correctness
-  * safety
-  * feasibility
-
-Example:
-
-* correct triage → 1.0
-* near miss → 0.5
-* unsafe → 0.0
+### 🧠 Information Extraction Layer
+Simulates the agent's ability to parse speech into structured clinical data. As the conversation progresses, the `symptoms` list in the observation is updated.
 
 ---
 
 ## 🧪 Inference System
 
-Run:
+Run the multi-turn conversational agent:
 
 ```bash
-python inference.py
+python3 inference.py
 ```
-
-### 🔐 Required Environment Variables
-
-```bash
-export MODEL_NAME="your-model"
-export HF_TOKEN="your-token"
-```
-
----
 
 ### 📊 Output Format (Strict)
 
 ```
-[START] task=easy env=RuralHealthEnv model=xxx
-[STEP] step=1 action=... reward=0.30 done=false error=null
-[END] success=true steps=1 rewards=0.30
+[START] task=hard env=RuralHealthEnv model=gpt-4-turbo
+[STEP] step=1 action=ask_question reward=0.40 done=false error=null
+[STEP] step=2 action=classify_urgency reward=0.30 done=true error=null
+[END] success=true steps=2 rewards=0.40,0.30
 ```
-
-✔ Fully compliant with evaluation requirements
 
 ---
 
 ## 🐳 Deployment
 
-### Build Docker Image
-
 ```bash
 docker build -t rural-health-env .
-```
-
-### Run Container
-
-```bash
 docker run rural-health-env
 ```
 
@@ -232,65 +152,23 @@ docker run rural-health-env
 
 ```
 env/
- ├── environment.py
- ├── models.py
- ├── state.py
- ├── reward.py
- ├── progression.py
- ├── patient_generator.py
- ├── tasks/
- ├── graders/
-
-inference.py
-openenv.yaml
-Dockerfile
-requirements.txt
+ ├── environment.py       # Core OpenEnv Interaction
+ ├── models.py            # Pydantic Schemas
+ ├── state.py             # State & Dialogue History
+ ├── reward.py            # Conversational Reward Logic
+ ├── progression.py       # Patient Health Logic
+ ├── patient_generator.py # 10+ Templates & Response Engine
+ ├── nlp_utils.py         # Simulated Info Extraction
+ ├── tasks/               # Multi-difficulty Task Suite
+ └── graders/             # Deterministic Evaluation
+inference.py             # Main Conversational LLM Loop
+openenv.yaml             # Environment Config (v0.2.0)
+Dockerfile               # Containerization
+requirements.txt         # Dependencies
 ```
-
----
-
-## 📈 Baseline Performance
-
-| Task   | Expected Success Rate |
-| ------ | --------------------- |
-| Easy   | ~80%                  |
-| Medium | ~50%                  |
-| Hard   | <30%                  |
-
----
-
-## 🌍 Real-World Impact
-
-This environment can be used to:
-
-* evaluate AI safety in healthcare
-* train decision-support systems
-* simulate rural healthcare constraints
-* benchmark LLM reasoning under uncertainty
-
-> 🧠 It bridges the gap between AI capability and real-world healthcare needs.
-
----
-
-## 🏆 Why This Matters
-
-RuralHealthEnv is not just a simulation — it is a **benchmark for responsible AI in high-stakes environments**.
-
-It encourages agents to be:
-
-* safe
-* practical
-* resource-aware
-* human-aligned
 
 ---
 
 ## 📜 License
 
 MIT License
-
----
-
-## 🙌 Acknowledgements
-
-Built for OpenEnv-based evaluation of real-world AI agents.
