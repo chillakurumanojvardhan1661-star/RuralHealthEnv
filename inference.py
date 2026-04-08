@@ -25,39 +25,51 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 client = OpenAI(api_key=HF_TOKEN or os.getenv("OPENAI_API_KEY", "EMPTY"), base_url=API_BASE_URL)
 
 def get_llm_action(observation: Dict[str, Any]) -> Action:
+    # Build conversation context
+    history = observation.get("conversation_history", [])
+    messages = [{"role": "system", "content": "You are a rural healthcare voice-call assistant in India. Be polite, ask clear questions, and help the patient safely."}]
+    
+    # Add history
+    for msg in history:
+        role = "assistant" if msg["role"] == "assistant" else "user"
+        messages.append({"role": role, "content": msg["content"]})
+    
     prompt = f"""
-    You are an AI medical agent working in a rural clinic in India. 
-    Your goal is to decide the best course of action for the patient based on symptoms, vitals, and available resources.
+    Observation Summary:
+    - Patient: {json.dumps(observation.get('patient_info'))}
+    - Symptoms extracted: {observation.get('symptoms')}
+    - Latest Utterance: "{observation.get('latest_utterance')}"
     
-    Observation:
-    {json.dumps(observation, indent=2)}
+    Choose one action type:
+    1. 'ask_question': Use this to get more info if things are vague. MUST provide 'content' with your question.
+    2. 'classify_urgency': Use once you understand the urgency. MUST provide 'urgency' (low, medium, high) in 'details'.
+    3. 'treat': If local treatment is appropriate.
+    4. 'refer': If immediate hospital care is needed.
     
-    Choose one action type: 'diagnose', 'treat', 'refer', or 'wait'.
-    - If you choose 'diagnose', you MUST provide an 'urgency' level in 'details' (low, medium, high).
-    - If you choose 'treat', you assume local facility has the resources.
-    - If you choose 'refer', you send the patient to a higher hospital.
-    - If you choose 'wait', you observe the patient for another step.
-    
-    Return your decision STICKTLY as a JSON object:
+    Return JSON:
     {{
-        "action_type": "diagnose|treat|refer|wait",
+        "action_type": "ask_question|classify_urgency|treat|refer",
+        "content": "Natural language response/question here",
         "details": {{ "urgency": "low|medium|high", "reasoning": "..." }}
     }}
     """
-    
+    messages.append({"role": "user", "content": prompt})
+
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[{"role": "system", "content": "You are a medical healthcare agent."},
-                      {"role": "user", "content": prompt}],
+            messages=messages,
             response_format={ "type": "json_object" }
         )
         content = response.choices[0].message.content
         data = json.loads(content)
-        return Action(action_type=ActionType(data["action_type"]), details=data.get("details", {}))
+        return Action(
+            action_type=ActionType(data["action_type"]), 
+            content=data.get("content"),
+            details=data.get("details", {})
+        )
     except Exception as e:
-        # Fallback to wait on error
-        return Action(action_type=ActionType.WAIT, details={"error": str(e)})
+        return Action(action_type=ActionType.WAIT, content="I am sorry, there was an error.", details={"error": str(e)})
 
 def run_task(task_name: str):
     tasks_map = {
@@ -112,5 +124,5 @@ def run_task(task_name: str):
         print(f"[END] success=false steps={step_num} rewards=0.00")
 
 if __name__ == "__main__":
-    for task in ["easy", "medium", "hard"]:
-        run_task(task)
+    for task_name in ["easy", "medium", "hard"]:
+        run_task(task_name)

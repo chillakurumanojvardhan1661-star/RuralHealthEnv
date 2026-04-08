@@ -7,6 +7,9 @@ class ActionType(str, Enum):
     TREAT = "treat"
     REFER = "refer"
     WAIT = "wait"
+    ASK_QUESTION = "ask_question"
+    CLASSIFY_URGENCY = "classify_urgency"
+    RESPOND = "respond"
 
 class UrgencyLevel(str, Enum):
     LOW = "low"
@@ -36,6 +39,10 @@ class Vitals(BaseModel):
     bp: str  # e.g., "120/80"
     heart_rate: int
 
+class ChatMessage(BaseModel):
+    role: str  # "assistant" (agent) or "user" (patient)
+    content: str
+
 class Observation(BaseModel):
     patient_info: PatientInfo
     symptoms: List[str]
@@ -43,9 +50,13 @@ class Observation(BaseModel):
     available_resources: List[Resource]
     distance_to_hospital: int  # in km
     history: List[Dict[str, Any]]
+    latest_utterance: Optional[str] = None
+    conversation_history: List[ChatMessage] = Field(default_factory=list)
+    extracted_data: Dict[str, Any] = Field(default_factory=dict)
 
 class Action(BaseModel):
     action_type: ActionType
+    content: Optional[str] = None
     details: Dict[str, Any] = Field(default_factory=dict)
 
 class RewardBreakdown(BaseModel):
@@ -53,9 +64,11 @@ class RewardBreakdown(BaseModel):
     correctness: float = 0.0
     resource_usage: float = 0.0
     triage: float = 0.0
+    question_quality: float = 0.0
+    information_gain: float = 0.0
 
 class Reward(BaseModel):
-    score: float  # 0.0 to 1.0
+    score: float  # -1.0 to 1.0
     breakdown: RewardBreakdown
 
 class PatientCase(BaseModel):
@@ -70,14 +83,19 @@ class PatientCase(BaseModel):
     required_resources: List[Resource]
     progression_rate: float  # multiplier for deterioration
     template_name: str
+    initial_description: str = ""
+    symptoms_to_responses: Dict[str, str] = Field(default_factory=dict)
 
 class State(BaseModel):
     current_case: PatientCase
     step_count: int
     max_steps: int
     action_history: List[Action]
+    conversation_history: List[ChatMessage]
     current_severity: SeverityLevel
     current_vitals: Vitals
+    discovered_symptoms: List[str]
+    discovered_vitals: Dict[str, Any]
     is_done: bool
     cumulative_reward: float
     last_progression: str = "stable"  # improved, worsened, stable

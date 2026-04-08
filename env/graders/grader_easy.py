@@ -8,7 +8,7 @@ class EasyGrader(BaseGrader):
     def evaluate(self, actions: List[Action], logs: List[Dict[str, Any]], patient_case: PatientCase) -> float:
         """Task 1: Correct classification -> 1.0, off-by-one -> 0.5, else 0.0."""
         for action in actions:
-            if action.action_type == ActionType.DIAGNOSE:
+            if action.action_type == ActionType.CLASSIFY_URGENCY:
                 inferred = action.details.get("urgency")
                 if not inferred: continue
                 

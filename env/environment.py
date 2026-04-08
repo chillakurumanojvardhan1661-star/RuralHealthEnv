@@ -1,12 +1,14 @@
 from typing import Any, Dict, List, Optional, Tuple
+import random
 from .models import (
     Observation, Action, Reward, State, ActionType, Resource, 
-    SeverityLevel, PatientCase, PatientInfo, Vitals
+    SeverityLevel, PatientCase, PatientInfo, Vitals, ChatMessage
 )
 from .state import EnvironmentStateManager
 from .progression import ConditionProgressionSimulator
 from .reward import RewardCalculator
-from .patient_generator import PatientCaseGenerator
+from .patient_generator import PatientCaseGenerator, ConversationalPatient
+from .nlp_utils import InformationExtractor
 
 class RuralHealthEnv:
     def __init__(self, seed: Optional[int] = None):
@@ -22,6 +24,8 @@ class RuralHealthEnv:
         if seed is not None:
             self.seed = seed
             self.generator = PatientCaseGenerator(seed=seed)
+            if self.seed:
+                random.seed(self.seed)
             
         patient_case = self.generator.generate_case(template_name=template_name)
         self.manager = EnvironmentStateManager(patient_case)
@@ -36,6 +40,32 @@ class RuralHealthEnv:
         state = self.manager.get_full_state()
         if state.is_done:
             return self._get_observation(), 0.0, True, {"error": "Episode already finished"}
+
+        # Conversational handling
+        patient_response = None
+        is_question_relevant = False
+        new_info_discovered = False
+        was_question_asked_before = False
+
+        if action.action_type == ActionType.ASK_QUESTION:
+            # 1. Generate response
+            patient_response = ConversationalPatient.generate_response(state.current_case, action.content or "")
+            self.manager.add_message("assistant", action.content or "")
+            self.manager.add_message("user", patient_response)
+            
+            # 2. Extract information
+            ext_symptoms, ext_vitals = InformationExtractor.extract_info(patient_response)
+            
+            # Check if this info is actually new
+            before_symptoms = set(state.discovered_symptoms)
+            self.manager.update_discovered_data(symptoms=ext_symptoms, vitals=ext_vitals)
+            after_symptoms = set(state.discovered_symptoms)
+            
+            if after_symptoms - before_symptoms:
+                new_info_discovered = True
+                
+            # Simple relevance check (content matches symptoms)
+            is_question_relevant = any(s.lower() in (action.content or "").lower() for s in state.current_case.symptoms)
 
         # Simulate progression
         new_severity, new_vitals, progression_desc, is_catastrophic = ConditionProgressionSimulator.calculate_progression(
@@ -53,7 +83,10 @@ class RuralHealthEnv:
             patient_case=state.current_case,
             available_resources=self.available_resources,
             is_catastrophic=is_catastrophic,
-            progression=progression_desc
+            progression=progression_desc,
+            new_info_discovered=new_info_discovered,
+            is_question_relevant=is_question_relevant,
+            was_question_asked_before=was_question_asked_before
         )
         
         # Update state
@@ -64,7 +97,7 @@ class RuralHealthEnv:
             self.manager.terminate(True)
             
         # Final decision termination
-        if action.action_type in [ActionType.REFER, ActionType.TREAT]:
+        if action.action_type in [ActionType.REFER, ActionType.TREAT, ActionType.CLASSIFY_URGENCY]:
              self.manager.terminate(True)
              
         # Detailed Info
@@ -74,7 +107,8 @@ class RuralHealthEnv:
             "severity_level": state.current_severity,
             "resource_violation": is_catastrophic and progression_desc == "resource_violation_failure",
             "progression": progression_desc,
-            "reward_breakdown": reward_obj.breakdown.dict()
+            "reward_breakdown": reward_obj.breakdown.model_dump(),
+            "info_extracted": list(state.discovered_symptoms)
         }
         
         state.cumulative_reward += reward_obj.score
@@ -89,14 +123,26 @@ class RuralHealthEnv:
 
     def _get_observation(self) -> Observation:
         state = self.manager.get_full_state()
+        history_msgs = state.conversation_history
+        latest_utterance = history_msgs[-1].content if history_msgs else None
+        
         return Observation(
             patient_info=state.current_case.patient_info,
-            symptoms=state.current_case.symptoms,
-            vitals=state.current_vitals,
+            symptoms=list(state.discovered_symptoms), # Only show what is discovered
+            vitals=state.current_vitals, 
             available_resources=self.available_resources,
             distance_to_hospital=random_distance(self.seed, state.current_case.id),
-            history=[{"action": a.action_type, "details": a.details} for a in state.action_history]
+            history=[{"action": a.action_type, "content": a.content} for a in state.action_history],
+            latest_utterance=latest_utterance,
+            conversation_history=history_msgs,
+            extracted_data={"symptoms": state.discovered_symptoms, "vitals": state.discovered_vitals}
         )
+
+def random_distance(seed: Optional[int], case_id: str) -> int:
+    import zlib
+    # Deterministic distance based on case ID
+    hash_val = zlib.adler32(case_id.encode())
+    return (hash_val % 100) + 5 # 5km to 105km
 
 def random_distance(seed: Optional[int], case_id: str) -> int:
     import zlib

@@ -1,25 +1,29 @@
 name: RuralHealthEnv
-description: Rural healthcare decision-making environment for India
+description: Conversational rural healthcare decision-making environment for India
 action_space:
   type: discrete
   actions:
-    - diagnose
+    - ask_question
+    - classify_urgency
     - treat
     - refer
     - wait
   details:
+    content: string (natural language utterance)
     urgency: [low, medium, high]
 observation_space:
   type: object
   properties:
     patient_info: [age, gender]
-    symptoms: [list of strings]
+    symptoms: [list of discovered strings]
     vitals: [temperature, bp, heart_rate]
     available_resources: [list of strings]
     distance_to_hospital: int
-    history: [list of actions]
+    latest_utterance: string (patient voice input)
+    conversation_history: [list of chat messages]
+    extracted_data: [structured symptoms/vitals discovered]
 tasks:
-  - easy: Urgency classification (1 step)
-  - medium: Decision-making (Treat vs Refer)
-  - hard: Full rural decision pipeline (Multi-step)
-version: 0.1.0
+  - easy: Urgency classification from initial description (0 turns)
+  - medium: Limited interaction (1-2 questions)
+  - hard: Full conversational-based decision pipeline (Max 8 turns)
+version: 0.2.0

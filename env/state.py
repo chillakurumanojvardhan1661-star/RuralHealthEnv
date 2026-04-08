@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional
-from .models import State, PatientCase, Action, ActionType, SeverityLevel, Vitals
+from .models import State, PatientCase, Action, ActionType, SeverityLevel, Vitals, ChatMessage
 
 class EnvironmentStateManager:
     def __init__(self, patient_case: PatientCase, max_steps: int = 8):
@@ -8,8 +8,13 @@ class EnvironmentStateManager:
             step_count=0,
             max_steps=max_steps,
             action_history=[],
+            conversation_history=[
+                ChatMessage(role="user", content=patient_case.initial_description)
+            ] if patient_case.initial_description else [],
             current_severity=patient_case.severity,
             current_vitals=patient_case.vitals,
+            discovered_symptoms=[],
+            discovered_vitals={},
             is_done=False,
             cumulative_reward=0.0
         )
@@ -23,9 +28,19 @@ class EnvironmentStateManager:
         # Check termination
         if self.state.step_count >= self.state.max_steps:
             self.state.is_done = True
-        
-        # Progression logic will update severity and vitals based on action quality
-        # This will be called externally to provide the progression string
+
+    def add_message(self, role: str, content: str):
+        """Adds a message to the conversation history."""
+        self.state.conversation_history.append(ChatMessage(role=role, content=content))
+
+    def update_discovered_data(self, symptoms: Optional[List[str]] = None, vitals: Optional[Dict[str, Any]] = None):
+        """Updates the agent's 'extracted' data."""
+        if symptoms:
+            for symptom in symptoms:
+                if symptom not in self.state.discovered_symptoms:
+                    self.state.discovered_symptoms.append(symptom)
+        if vitals:
+            self.state.discovered_vitals.update(vitals)
 
     def update_condition(self, new_severity: SeverityLevel, new_vitals: Vitals):
         """Updates the current severity and vitals of the patient."""

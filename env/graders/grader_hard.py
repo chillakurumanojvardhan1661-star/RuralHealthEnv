@@ -9,9 +9,9 @@ class HardGrader(BaseGrader):
         decision_score = 0.0
         safety_mult = 1.0
         
-        # 1. Triage accuracy (any diagnose action)
+        # 1. Triage accuracy
         for action in actions:
-            if action.action_type == ActionType.DIAGNOSE:
+            if action.action_type == ActionType.CLASSIFY_URGENCY:
                 inferred = action.details.get("urgency")
                 if inferred == patient_case.correct_urgency:
                     triage_score = 0.3
@@ -24,8 +24,8 @@ class HardGrader(BaseGrader):
             final_action = actions[-1]
             if final_action.action_type == patient_case.correct_decision:
                 decision_score = 0.7
-            elif final_action.action_type == ActionType.WAIT:
-                decision_score = 0.1 # Partial for waiting
+            elif final_action.action_type == ActionType.WAIT or final_action.action_type == ActionType.ASK_QUESTION:
+                decision_score = 0.1 # Partial for observing/asking
         
         # 3. Safety/Progression penalty
         for log in logs:
