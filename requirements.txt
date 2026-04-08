@@ -5,3 +5,4 @@ uvicorn
 python-dotenv
 pytest
 gradio>=5.0.0
+openenv-core>=0.2.0
