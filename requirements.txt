@@ -4,4 +4,4 @@ fastapi
 uvicorn
 python-dotenv
 pytest
-gradio
+gradio>=5.0.0
