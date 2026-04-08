@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rural-health-env"
+version = "0.2.0"
+description = "Conversational rural healthcare decision-making environment for India"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Manoj Vardhan" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "openai",
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "python-dotenv",
+    "pytest",
+    "gradio>=5.0.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/chillakurumanojvardhan1661-star/RuralHealthEnv"
+"Bug Tracker" = "https://github.com/chillakurumanojvardhan1661-star/RuralHealthEnv/issues"
