@@ -1,3 +1,12 @@
+---
+title: RuralHealthEnv
+emoji: 🏥
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+app_file: app.py
+---
 # 🏥 RuralHealthEnv (v0.2.0)
 
 ### A Conversational OpenEnv Benchmark for Rural Healthcare Decision-Making in India
