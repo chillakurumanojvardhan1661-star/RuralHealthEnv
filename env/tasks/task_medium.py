@@ -1,3 +1,7 @@
+from .base import BaseTask
+from ..models import Observation
+import random
+
 class MediumTask(BaseTask):
     """Task 2: Decision making (Medium). 1-2 turns allowed. Treat or Refer based on moderate cases."""
     def reset(self) -> Observation:

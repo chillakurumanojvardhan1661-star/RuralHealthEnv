@@ -1,3 +1,7 @@
+from .base import BaseTask
+from ..models import Observation
+import random
+
 class HardTask(BaseTask):
     """Task 3: Full Pipeline (Hard). Multi-step severe cases. 8 turns allowed for dialogue support."""
     def reset(self) -> Observation:
