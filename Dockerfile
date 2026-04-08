@@ -14,5 +14,8 @@ ENV API_BASE_URL=https://api.openai.com/v1
 ENV MODEL_NAME=gpt-4-turbo
 ENV HF_TOKEN=""
 
-# Command to run (defaults to inference)
-CMD ["python", "inference.py"]
+# Expose port for Gradio (HF Spaces default)
+EXPOSE 7860
+
+# Command to run (defaults to Gradio app)
+CMD ["python", "app.py"]
