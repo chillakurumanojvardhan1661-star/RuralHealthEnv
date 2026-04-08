@@ -34,14 +34,15 @@ class StepResponse(BaseModel):
 
 # API Endpoints
 @app.post("/reset", response_model=Dict[str, Any])
-async def reset_env(request: ResetRequest):
+async def reset_env(request: Optional[ResetRequest] = None):
     global env, current_task
+    task_id = request.task_id if request else "hard"
     task_map = {
         "easy": EasyTask(seed=42),
         "medium": MediumTask(seed=42),
         "hard": HardTask(seed=42)
     }
-    task = task_map.get(request.task_id, HardTask(seed=42))
+    task = task_map.get(task_id, HardTask(seed=42))
     current_task = task
     obs = task.reset()
     return obs.model_dump()
