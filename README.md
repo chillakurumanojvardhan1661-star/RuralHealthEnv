@@ -181,3 +181,52 @@ requirements.txt         # Dependencies
 ## 📜 License
 
 MIT License
+
+---
+
+## 🔮 Future Enhancements & Roadmap
+
+RuralHealthEnv is designed as a foundational benchmark for AI-driven healthcare navigation. We envision extending this system into a fully deployable, real-world solution.
+
+### 📞 1. Real Voice Call Integration
+* Integrate with telephony APIs (e.g., Twilio) to enable inbound patient calls and real-time voice interaction.
+* Convert speech-to-text and text-to-speech for seamless communication.
+* Support low-bandwidth and feature-phone users.
+
+### 🧠 2. Advanced Natural Language Understanding
+* Replace keyword-based extraction with fine-tuned medical NLP models and multilingual understanding (Hindi, Telugu, Tamil, etc.).
+* Handle dialects, slang, and ambiguous patient descriptions.
+
+### 🏥 3. Real-Time Healthcare Facility Mapping
+* Integrate with live healthcare databases for nearby hospitals, PHCs, clinics and real-time availability (beds, doctors, ambulances).
+* Provide location-aware routing recommendations.
+
+### 🚑 4. Emergency Response Integration
+* Direct integration with ambulance services and emergency helplines.
+* Enable automatic escalation for critical cases.
+
+### 👩‍⚕️ 5. Doctor-in-the-Loop System
+* Enable hybrid workflows where AI performs initial triage and doctors validate high-risk decisions.
+* Build trust and safety into deployment.
+
+### 📊 6. Learning from Real-World Data
+* Continuously improve models using anonymized call transcripts and real patient outcomes.
+* Adapt to regional healthcare patterns.
+
+### 🧪 7. Expanded Benchmarking Capabilities
+* Introduce multi-agent simulations (assistant + doctor) and long-horizon patient care tracking.
+* Evaluate advanced reasoning and safety in AI agents.
+
+### ⚖️ 8. Ethical & Safety Enhancements
+* Add bias detection and fairness checks across demographics.
+* Ensure responsible AI deployment in sensitive healthcare settings.
+
+### 🌍 9. Scaling Beyond Rural India
+* Adapt the system for other developing regions and global low-resource healthcare systems.
+* Generalize the environment for broader AI evaluation.
+
+### 🧩 10. Full Product Development
+* Build a complete platform including mobile + call interfaces, backend decision engine, and analytics dashboard for healthcare providers.
+* Transition from simulation → real-world deployment.
+
+> 🚀 Our long-term vision is to bridge the gap between patients and healthcare systems using accessible, intelligent, and safe AI-driven navigation tools.
