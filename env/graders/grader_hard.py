@@ -34,4 +34,4 @@ class HardGrader(BaseGrader):
                 safety_mult = 0.0
                 break
                 
-        return round((triage_score + decision_score) * safety_mult, 2)
+        return self.clamp_score(round((triage_score + decision_score) * safety_mult, 2))

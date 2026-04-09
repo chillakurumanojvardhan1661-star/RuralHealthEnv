@@ -17,8 +17,8 @@ class EasyGrader(BaseGrader):
                     inferred_val = self.URGENCY_MAP[UrgencyLevel(inferred)]
                     
                     diff = abs(target_val - inferred_val)
-                    if diff == 0: return 1.0
-                    if diff == 1: return 0.5
+                    if diff == 0: return self.clamp_score(1.0)
+                    if diff == 1: return self.clamp_score(0.5)
                 except (KeyError, ValueError):
                     continue
-        return 0.0
+        return self.clamp_score(0.0)
