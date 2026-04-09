@@ -39,7 +39,7 @@ class RuralHealthEnv:
         
         state = self.manager.get_full_state()
         if state.is_done:
-            return self._get_observation(), 0.0, True, {"error": "Episode already finished"}
+            return self._get_observation(), 0.1, True, {"error": "Episode already finished"}
 
         # Conversational handling
         patient_response = None

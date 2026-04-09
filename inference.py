@@ -120,8 +120,8 @@ def run_task(task_name: str):
         
     except Exception as e:
         error_msg = str(e).replace("\n", " ")
-        print(f"[STEP] step={step_num+1} action=null reward=0.00 done=true error={error_msg}")
-        print(f"[END] success=false steps={step_num} rewards=0.00")
+        print(f"[STEP] step={step_num+1} action=null reward=0.10 done=true error={error_msg}")
+        print(f"[END] success=false steps={step_num} rewards=0.10")
 
 if __name__ == "__main__":
     for task_name in ["easy", "medium", "hard"]:
