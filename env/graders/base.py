@@ -9,5 +9,5 @@ class BaseGrader(ABC):
         pass
 
     def clamp_score(self, score: float) -> float:
-        """Clamps score strictly between 0 and 1, e.g., mapping 0->0.01 and 1->0.99."""
-        return max(0.01, min(0.99, score))
+        """Clamps score strictly between 0 and 1, e.g., mapping 0->0.1 and 1->0.9."""
+        return max(0.1, min(0.9, score))

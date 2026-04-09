@@ -77,4 +77,7 @@ class RewardCalculator:
              # This is a bit simplistic but works as a baseline
              total_score -= 0.2
         
+        # Clamp strictly between 0 and 1
+        total_score = max(0.1, min(0.9, total_score))
+        
         return Reward(score=round(total_score, 2), breakdown=breakdown)
