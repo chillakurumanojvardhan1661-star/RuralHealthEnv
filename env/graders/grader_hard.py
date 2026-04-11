@@ -1,10 +1,11 @@
 from .base import BaseGrader
 from typing import List, Dict, Any
 from ..models import Action, ActionType, PatientCase, UrgencyLevel
+from ..utils import normalize_score
 
 class HardGrader(BaseGrader):
     def evaluate(self, actions: List[Action], logs: List[Dict[str, Any]], patient_case: PatientCase) -> float:
-        """Task 3: Full pipeline scoring (0.3 triage + 0.7 decision) * safety penalty."""
+        """Task 3: Full pipeline scoring (0.3 triage + 0.65 decision) * safety penalty."""
         triage_score = 0.0
         decision_score = 0.0
         safety_mult = 1.0
@@ -23,7 +24,7 @@ class HardGrader(BaseGrader):
         if actions:
             final_action = actions[-1]
             if final_action.action_type == patient_case.correct_decision:
-                decision_score = 0.7
+                decision_score = 0.65
             elif final_action.action_type == ActionType.WAIT or final_action.action_type == ActionType.ASK_QUESTION:
                 decision_score = 0.1 # Partial for observing/asking
         
@@ -31,7 +32,7 @@ class HardGrader(BaseGrader):
         for log in logs:
             if not log: continue
             if log.get("resource_violation") or log.get("reason") in ["critical_deterioration", "resource_violation_failure"]:
-                safety_mult = 0.0
+                safety_mult = 0.05
                 break
                 
-        return self.clamp_score(round((triage_score + decision_score) * safety_mult, 2))
+        return normalize_score((triage_score + decision_score) * safety_mult)
