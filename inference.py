@@ -25,6 +25,14 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 client = OpenAI(api_key=HF_TOKEN or os.getenv("OPENAI_API_KEY", "EMPTY"), base_url=API_BASE_URL)
 
+def safe_format(score: float) -> float:
+    """Ensures score is strictly in (0.01, 0.99) after 2-decimal rounding."""
+    if score <= 0.01:
+        return 0.01
+    if score >= 0.99:
+        return 0.99
+    return round(score, 2)
+
 def get_llm_action(observation: Dict[str, Any]) -> Action:
     # Build conversation context
     history = observation.get("conversation_history", [])
@@ -103,7 +111,8 @@ def run_task(task_name: str):
             rewards.append(reward)
             logs.append(info)
             
-            reward_str = f"{reward:.6f}"
+            safe_reward = safe_format(reward)
+            reward_str = f"{safe_reward:.2f}"
             done_str = "true" if done else "false"
             error_str = "null"
             
@@ -117,7 +126,9 @@ def run_task(task_name: str):
         final_score = normalize_score(raw_score)
         
         success = "true" if final_score >= 0.1 else "false"
-        rewards_list = ",".join([f"{r:.6f}" for r in rewards])
+        safe_final_score = safe_format(final_score)
+        safe_rewards = [safe_format(r) for r in rewards]
+        rewards_list = ",".join([f"{r:.2f}" for r in safe_rewards])
         
         # Debug Assertion
         assert 0 < final_score < 1, f"Invalid final score: {final_score}"
@@ -127,8 +138,9 @@ def run_task(task_name: str):
     except Exception as e:
         error_msg = str(e).replace("\n", " ")
         norm_reward = normalize_score(0.1)
-        print(f"[STEP] step={step_num+1} action=null reward={norm_reward:.6f} done=true error={error_msg}")
-        print(f"[END] success=false steps={step_num} rewards={norm_reward:.6f}")
+        safe_reward = safe_format(norm_reward)
+        print(f"[STEP] step={step_num+1} action=null reward={safe_reward:.2f} done=true error={error_msg}")
+        print(f"[END] success=false steps={step_num} rewards={safe_reward:.2f}")
 
 if __name__ == "__main__":
     for task_name in ["easy", "medium", "hard"]:
