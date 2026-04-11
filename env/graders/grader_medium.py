@@ -1,12 +1,11 @@
 from .base import BaseGrader
 from typing import List, Dict, Any
 from ..models import Action, ActionType, PatientCase, Resource
-from ..utils import normalize_score
 
 class MediumGrader(BaseGrader):
     def evaluate(self, actions: List[Action], logs: List[Dict[str, Any]], patient_case: PatientCase) -> float:
-        """Task 2: Correct decision -> 0.95, invalid -> 0.05, else 0.2 partial if waiting."""
-        score = 0.05
+        """Task 2: Correct decision -> 0.85, acceptable -> 0.5, else 0.15."""
+        score = 0.15
         
         if actions:
             # Check for catastrophic survival
@@ -15,11 +14,10 @@ class MediumGrader(BaseGrader):
             if not any_catastrophic:
                 final_action = actions[-1]
                 if final_action.action_type == patient_case.correct_decision:
-                    score = 0.95
+                    score = 0.85
                 elif final_action.action_type == ActionType.WAIT or final_action.action_type == ActionType.DIAGNOSE:
-                    score = 0.2
+                    score = 0.5
         
-        # Final Step: Normalize and Assert
-        score = normalize_score(score)
+        # Final Constraint
         assert 0 < score < 1, f"Invalid score in MediumGrader: {score}"
         return score

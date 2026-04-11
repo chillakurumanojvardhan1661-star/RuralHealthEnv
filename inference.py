@@ -16,7 +16,7 @@ from env.models import Action, ActionType
 from env.graders.grader_easy import EasyGrader
 from env.graders.grader_medium import MediumGrader
 from env.graders.grader_hard import HardGrader
-from env.utils import normalize_score
+# Removed normalize_score import
 
 # Configuration from environment variables
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
@@ -121,14 +121,11 @@ def run_task(task_name: str):
             if task_name == "easy": # Easy is single step
                 done = True
 
-        # Calculate success based on grader and normalize final score
-        raw_score = grader.evaluate(actions, logs, task.env.state().current_case)
-        final_score = normalize_score(raw_score)
+        # Calculate success based on grader
+        final_score = grader.evaluate(actions, logs, task.env.state().current_case)
         
         success = "true" if final_score >= 0.1 else "false"
-        safe_final_score = safe_format(final_score)
-        safe_rewards = [safe_format(r) for r in rewards]
-        rewards_list = ",".join([f"{r:.2f}" for r in safe_rewards])
+        rewards_list = ",".join([f"{r:.2f}" for r in [safe_format(r) for r in rewards]])
         
         # Debug Assertion
         assert 0 < final_score < 1, f"Invalid final score: {final_score}"
@@ -137,8 +134,7 @@ def run_task(task_name: str):
         
     except Exception as e:
         error_msg = str(e).replace("\n", " ")
-        norm_reward = normalize_score(0.1)
-        safe_reward = safe_format(norm_reward)
+        safe_reward = safe_format(0.1)
         print(f"[STEP] step={step_num+1} action=null reward={safe_reward:.2f} done=true error={error_msg}")
         print(f"[END] success=false steps={step_num} rewards={safe_reward:.2f}")
 
