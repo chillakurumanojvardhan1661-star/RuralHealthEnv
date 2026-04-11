@@ -6,8 +6,8 @@ class EasyGrader(BaseGrader):
     URGENCY_MAP = {UrgencyLevel.LOW: 1, UrgencyLevel.MEDIUM: 2, UrgencyLevel.HIGH: 3}
     
     def evaluate(self, actions: List[Action], logs: List[Dict[str, Any]], patient_case: PatientCase) -> float:
-        """Task 1: Correct classification -> 0.9, off-by-one -> 0.5, else 0.1."""
-        score = 0.1
+        """Task 1: Correct classification -> 0.8, off-by-one -> 0.5, else 0.2."""
+        score = 0.2
         for action in actions:
             if action.action_type == ActionType.CLASSIFY_URGENCY:
                 inferred = action.details.get("urgency")
@@ -19,7 +19,7 @@ class EasyGrader(BaseGrader):
                     
                     diff = abs(target_val - inferred_val)
                     if diff == 0: 
-                        score = 0.9
+                        score = 0.8
                         break
                     if diff == 1: 
                         score = 0.5

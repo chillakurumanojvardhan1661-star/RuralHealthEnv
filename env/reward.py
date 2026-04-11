@@ -80,4 +80,4 @@ class RewardCalculator:
         # Clamp strictly between 0 and 1
         total_score = max(0.1, min(0.9, total_score))
         
-        return Reward(score=round(total_score, 2), breakdown=breakdown)
+        return Reward(score=total_score, breakdown=breakdown)

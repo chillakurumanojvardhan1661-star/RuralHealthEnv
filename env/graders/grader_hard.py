@@ -31,7 +31,7 @@ class HardGrader(BaseGrader):
         for log in logs:
             if not log: continue
             if log.get("resource_violation") or log.get("reason") in ["critical_deterioration", "resource_violation_failure"]:
-                safety_mult = 0.2
+                safety_mult = 0.3
                 break
         
         score = (0.3 * triage_val + 0.7 * decision_val) * safety_mult

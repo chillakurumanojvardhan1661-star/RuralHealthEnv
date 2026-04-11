@@ -4,8 +4,8 @@ from ..models import Action, ActionType, PatientCase, Resource
 
 class MediumGrader(BaseGrader):
     def evaluate(self, actions: List[Action], logs: List[Dict[str, Any]], patient_case: PatientCase) -> float:
-        """Task 2: Correct decision -> 0.85, acceptable -> 0.5, else 0.15."""
-        score = 0.15
+        """Task 2: Correct decision -> 0.85, acceptable -> 0.5, else 0.25."""
+        score = 0.25
         
         if actions:
             # Check for catastrophic survival
