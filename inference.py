@@ -102,7 +102,7 @@ def run_task(task_name: str):
             rewards.append(reward)
             logs.append(info)
             
-            reward_str = f"{reward:.2f}"
+            reward_str = f"{reward:.6f}"
             done_str = "true" if done else "false"
             error_str = "null"
             
@@ -114,7 +114,7 @@ def run_task(task_name: str):
         # Calculate success based on grader
         final_score = grader.evaluate(actions, logs, task.env.state().current_case)
         success = "true" if final_score >= 0.1 else "false"
-        rewards_list = ",".join([f"{r:.2f}" for r in rewards])
+        rewards_list = ",".join([f"{r:.6f}" for r in rewards])
         
         print(f"[END] success={success} steps={step_num} rewards={rewards_list}")
         

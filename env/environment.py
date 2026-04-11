@@ -9,6 +9,7 @@ from .progression import ConditionProgressionSimulator
 from .reward import RewardCalculator
 from .patient_generator import PatientCaseGenerator, ConversationalPatient
 from .nlp_utils import InformationExtractor
+from .utils import normalize_score
 
 class RuralHealthEnv:
     def __init__(self, seed: Optional[int] = None):
@@ -39,7 +40,7 @@ class RuralHealthEnv:
         
         state = self.manager.get_full_state()
         if state.is_done:
-            return self._get_observation(), 0.1, True, {"error": "Episode already finished"}
+            return self._get_observation(), normalize_score(0.1), True, {"error": "Episode already finished"}
 
         # Conversational handling
         patient_response = None
@@ -111,9 +112,11 @@ class RuralHealthEnv:
             "info_extracted": list(state.discovered_symptoms)
         }
         
-        state.cumulative_reward += reward_obj.score
+        # Force-normalize reward as global safety net
+        final_reward = normalize_score(reward_obj.score)
+        state.cumulative_reward += final_reward
         
-        return self._get_observation(), reward_obj.score, state.is_done, info
+        return self._get_observation(), final_reward, state.is_done, info
 
     def state(self) -> State:
         """Returns the full internal state."""

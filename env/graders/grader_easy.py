@@ -27,4 +27,8 @@ class EasyGrader(BaseGrader):
                         break
                 except (KeyError, ValueError):
                     continue
-        return normalize_score(score)
+        
+        # Final Step: Normalize and Assert
+        score = normalize_score(score)
+        assert 0 < score < 1, f"Invalid score in EasyGrader: {score}"
+        return score

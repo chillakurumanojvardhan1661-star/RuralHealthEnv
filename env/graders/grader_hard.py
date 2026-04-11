@@ -32,7 +32,12 @@ class HardGrader(BaseGrader):
         for log in logs:
             if not log: continue
             if log.get("resource_violation") or log.get("reason") in ["critical_deterioration", "resource_violation_failure"]:
-                safety_mult = 0.05
+                safety_mult = 0.1
                 break
-                
-        return normalize_score((triage_score + decision_score) * safety_mult)
+        
+        score = (triage_score + decision_score) * safety_mult
+        
+        # Final Step: Normalize and Assert
+        score = normalize_score(score)
+        assert 0 < score < 1, f"Invalid score in HardGrader: {score}"
+        return score
